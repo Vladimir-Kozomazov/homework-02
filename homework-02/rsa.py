@@ -2,68 +2,79 @@ import random
 import typing as tp
 
 
-class rsa:
-    @staticmethod
-    def is_prime(n: int) -> bool:
-        if n < 2:
-            return False
-        for i in range(2, int(n**0.5) + 1):
-            if n % i == 0:
-                return False
-            return True
+def is_prime(n: int) -> bool:
+    """
+    Tests to see if a number is prime.
 
-    @staticmethod
-    def gcd(a: int, b: int) -> int:
-        while b:
-            a, b = b, a % b
-        return a
+    >>> is_prime(2)
+    True
+    >>> is_prime(11)
+    True
+    >>> is_prime(8)
+    False
+    """
+    if n < 2:
+      return False
+    for i in range(2, int(n**0.5)+1):
+      if n % i == 0:
+        return False
+    return True
 
-    @staticmethod
-    def multiplicative_inverse(e: int, phi: int) -> int:
-        d, x1, x2 = 0, 0, 1
-        y1, y2 = 1, 0
-        original_phi = phi
-        while e > 0:
-            q = phi // e
-            r = phi % e
-            phi, e = e, r
-            x = x1 - q * x2
-            y = y1 - q * y2
-            x1, x2 = x2, x
-            y1, y2 = y2, y
-        if x1 < 0:
-            x1 += original_phi
-            return x1
 
-    @staticmethod
-    def generate_keypair(
-        p: int, q: int
-    ) -> tp.Tuple[tp.Tuple[int, int], tp.Tuple[int, int]]:
-        n = p * q
-        phi = (p - 1)(q - 1)
+def gcd(a: int, b: int) -> int:
+    """
+    Euclid's algorithm for determining the greatest common divisor.
 
-        e = random.random(1, phi)
-        g = rsa.gsd(e, phi)
-        while g != 1:
-            e = random.randrange(1, phi)
-            g = rsa.gsd(e, phi)
+    >>> gcd(12, 15)
+    3
+    >>> gcd(3, 7)
+    1
+    """
+    while b:
+      a , b = b, a % b
+    return a
 
-        d = rsa.multiplicative_invers(e, phi)
-        return ((e, n), (d, n))
+
+def multiplicative_inverse(e: int, phi: int) -> int:
+    """
+    Euclid's extended algorithm for finding the multiplicative
+    inverse of two numbers.
+
+    >>> multiplicative_inverse(7, 40)
+    23
+    """
+    d, x1, x2 = 0, 0, 1
+    y1, y2 = 1, 0
+    original_phi = phi
+    while e > 0:
+      q = phi // e
+      r = phi % e
+      phi, e = e, r
+      x = x1 - q * x2
+      y = y1 - q * y2
+      x1, x2 = x2, x
+      y1, y2 = y2, y
+    if x1 < 0:
+      x1 += original_phi
+    return x1
+
+
+def generate_keypair(p: int, q: int) -> tp.Tuple[tp.Tuple[int, int], tp.Tuple[int, int]]:
+    if not (is_prime(p) and is_prime(q)):
+        raise ValueError("Both numbers must be prime.")
+    elif p == q:
+        raise ValueError("p and q cannot be equal")
+
+    n = p * q
+    phi = (p-1)(q-1)
 
     e = random.randrange(1, phi)
-
-    # Use Euclid's Algorithm to verify that e and phi(n) are coprime
-    g = gcd(e, phi)
+    g = rsa.gsd(e, phi)
     while g != 1:
-        e = random.randrange(1, phi)
-        g = gcd(e, phi)
+      e = random.randrange(1, phi)
+      g = rsa.gsd(e, phi)
 
-    # Use Extended Euclid's Algorithm to generate the private key
-    d = multiplicative_inverse(e, phi)
-
-    # Return public and private keypair
-    # Public key is (e, n) and private key is (d, n)
+    d = rsa.multiplicative_inverse(e, phi)
     return ((e, n), (d, n))
 
 
@@ -81,7 +92,7 @@ def decrypt(pk: tp.Tuple[int, int], ciphertext: tp.List[int]) -> str:
     # Unpack the key into its components
     key, n = pk
     # Generate the plaintext based on the ciphertext and key using a^b mod m
-    plain = [chr((char**key) % n) for char in ciphertext]
+    plain = [chr((char ** key) % n) for char in ciphertext]
     # Return the array of bytes as a string
     return "".join(plain)
 
